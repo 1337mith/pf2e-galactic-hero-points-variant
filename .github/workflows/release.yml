@@ -22,7 +22,7 @@ jobs:
         zip -r pf2e-galactic-hero-points-variant-${VERSION}.zip pf2e-galactic-hero-points-variant/
       
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pf2e-galactic-hero-points-variant-${{ env.VERSION }}.zip
         path: pf2e-galactic-hero-points-variant-${{ env.VERSION }}.zip
