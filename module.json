@@ -1,7 +1,7 @@
 {
   "id": "pf2e-galactic-hero-points-variant",
   "title": "Galactic Hero Points Variant",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
