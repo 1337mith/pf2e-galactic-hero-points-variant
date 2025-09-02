@@ -13,7 +13,7 @@ Hooks.once("ready", () => {
                         }
                     }
                 }
-                newRoll._total = newRoll.dice.reduce((total, d) => total + (d.total ?? 0), 0);
+                // NOT recalculating newRoll._total to preserve modifiers
             }
         };
         Hooks.once("pf2e.reroll", patchDice); // Intercept right after roll
