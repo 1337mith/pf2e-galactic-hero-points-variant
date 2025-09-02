@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   build-zip:
     runs-on: ubuntu-latest
@@ -19,10 +22,22 @@ jobs:
 
     - name: Create ZIP archive with version in name
       run: |
-        zip -r pf2e-galactic-hero-points-variant-${VERSION}.zip . -x .git/**\*
+        zip -r pf2e-galactic-hero-points-variant-${VERSION}.zip .
       
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: pf2e-galactic-hero-points-variant-${{ env.VERSION }}.zip
         path: pf2e-galactic-hero-points-variant-${{ env.VERSION }}.zip
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        body: "Automated release for version ${{ github.ref_name }}."
+        draft: false
+        prerelease: false
