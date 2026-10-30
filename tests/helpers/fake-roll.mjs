@@ -45,3 +45,50 @@ export function evaluate(terms) {
 }
 
 export const heroPoints = () => ({ value: 1, max: 3, slug: "hero-points", label: "Hero Points" });
+
+// --- Added for architect-review behaviours (fail-closed, inactive dice, cached totals) ---
+
+// Mirrors Foundry's DiceTerm: `total` is a CACHED value (own data property) computed from the
+// ACTIVE results at evaluation time. It does not follow later edits to results[i].result, so
+// code that mutates a result must update term.total itself. `actives` marks kh/kl drops.
+export function cachedDie(faces, values, actives = values.map(() => true)) {
+  const t = new FakeDie(faces, values);
+  t.results = values.map((result, i) => ({ result, active: actives[i] }));
+  Object.defineProperty(t, "total", {
+    value: t.results.filter((r) => r.active).reduce((s, r) => s + r.result, 0),
+    writable: true, enumerable: true, configurable: true,
+  });
+  return t;
+}
+
+// ParentheticalTerm shape: has .terms and .roll, own cached total. Nested dice are exposed in roll.dice
+// (Foundry's Roll#dice flattens nested dice).
+export function parenthetical(innerTerms, total) {
+  const inner = makeRoll(innerTerms);
+  return { class: "ParentheticalTerm", terms: inner.terms, roll: inner, dice: inner.dice, total };
+}
+// PoolTerm shape: has .rolls
+export function pool(rolls, total) {
+  return { class: "PoolTerm", rolls, terms: [], dice: rolls.flatMap((r) => r.dice), total };
+}
+
+// makeRoll variant whose dice list includes nested dice contributed by parenthetical/pool terms.
+export function makeRollNested(spec) {
+  const roll = makeRoll(spec);
+  roll.dice = roll.terms.flatMap((t) => (t instanceof FakeDie ? [t] : t.dice ?? []));
+  return roll;
+}
+
+// Deep snapshot of everything the module could mutate.
+export function snapshot(roll) {
+  const walk = (r) => ({
+    _total: r._total,
+    terms: (r.terms ?? []).map((t) => ({
+      total: t.total,
+      results: t.results?.map((x) => ({ ...x })),
+      inner: t.roll ? walk(t.roll) : undefined,
+      rolls: t.rolls?.map(walk),
+    })),
+  });
+  return JSON.stringify(walk(roll));
+}

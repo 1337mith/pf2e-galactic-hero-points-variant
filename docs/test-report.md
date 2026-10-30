@@ -16,3 +16,19 @@ Run: `node --test tests/` (Node 20+; tests are `.mjs`, no package.json needed).
 | AC-13 robustness | partial (empty roll, unevaluated die) |
 | AC-6 (kh/kl), AC-12 (Misfortune), AC-10/11 (degree, rendering) | BLOCKED, unverified, no tests written |
 | AC-9 (oldRoll not mutated) | not yet tested (add once module exists) |
+
+## Architect-review red phase (2026-10-30, branch fix/issue-3-negative-modifier)
+Run: `node --test tests/` against developer's scripts/reroll.js and scripts/module.js. 52 tests, 30 pass, 22 fail. All failures are behavioural (no import errors).
+New files: tests/failclosed.test.mjs, tests/hook.test.mjs; helpers added to tests/helpers/fake-roll.mjs (cachedDie, parenthetical, pool, makeRollNested, snapshot).
+
+| Behaviour | Tests | Status |
+|-----------|-------|--------|
+| Fail-closed: throw on `*`, `/`, `%`, Parenthetical, Pool, string/undefined/NaN term total | 9 throw + 9 no-mutation | 18 FAIL (no throw; dice floored and _total rewritten silently, e.g. `1d20 * 2` total becomes 12) |
+| Unary minus `-2 + 1d20`, `+ -2`, `- -2` | 4 | pass on current code |
+| Cached term.total updated after floor (6 -> 10) | 1 | FAIL (term.total stays 6) |
+| Inactive (kh/kl dropped) dice not floored | 2 | FAIL (inactive 4 floored to 10) |
+| Inactive dice excluded from term/roll total; stay inactive | 2 | pass (but only because inactive die is untouched and cache untouched; revisit after fix) |
+| Hook (AC-7, AC-9): hero-points floors newRoll; other slug no-op; oldRoll unmutated; caught exception leaves roll unchanged | 5 | pass |
+| Hook fail-closed: `1d20 * 2` logs error, roll unchanged | 1 | FAIL (no throw, roll mutated) |
+
+AC-9 now covered at hook level (oldRoll snapshot unchanged). AC-6/12/10/11 remain BLOCKED.
