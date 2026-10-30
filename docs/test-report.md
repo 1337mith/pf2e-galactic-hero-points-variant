@@ -80,3 +80,9 @@ Limitations and still open:
 - S-1 AC-6 (kh/kl) and AC-12 (Misfortune) remain BLOCKED (rule silent); AC-10, 11, 14 remain UNVERIFIED.
 
 Lesson: unit fakes must mirror real Foundry term prototypes (BUG-2 slipped through because the fake Die lacked `roll()`).
+
+## S-2 manifest tests (feat/sf2e-support, RED)
+New file tests/manifest.test.mjs (9 tests, reads module.json): pf2e and sf2e system entries (type "system"), no duplicate system ids, semver version, manifest/download URLs match version, compatibility.minimum "14" and verified >= minimum, esmodules paths exist.
+Run: `node --test "tests/**/*.test.mjs"` gives 75 tests, 74 pass, 1 fail. Expected failure: "declares sf2e as a system of type system" (module.json has no sf2e entry yet).
+
+Scope limit: only the manifest declaration is covered. sf2e runtime behaviour is untested; S-2 behaviour ACs (including AC-21/22, whether sf2e emits `pf2e.reroll`) remain BLOCKED/UNVERIFIED until checked in a live Foundry with sf2e.
