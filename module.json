@@ -1,10 +1,10 @@
 {
   "id": "pf2e-galactic-hero-points-variant",
   "title": "Galactic Hero Points Variant",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "compatibility": {
-    "minimum": "13",
-    "verified": "13.348"
+    "minimum": "14",
+    "verified": "14.369"
   },
   "esmodules": [
     "scripts/module.js"
@@ -33,7 +33,7 @@
     ]
   },
   "bugs": "https://github.com/1337mith/pf2e-galactic-hero-points-variant/issues",
-  "manifest": "https://raw.githubusercontent.com/1337mith/pf2e-galactic-hero-points-variant/v1.0.3/module.json",
-  "download": "https://github.com/1337mith/pf2e-galactic-hero-points-variant/releases/download/v1.0.3/pf2e-galactic-hero-points-variant-1.0.3.zip",
+  "manifest": "https://raw.githubusercontent.com/1337mith/pf2e-galactic-hero-points-variant/v1.1.0/module.json",
+  "download": "https://github.com/1337mith/pf2e-galactic-hero-points-variant/releases/download/v1.1.0/pf2e-galactic-hero-points-variant-1.1.0.zip",
   "changelog": "https://github.com/1337mith/pf2e-galactic-hero-points-variant/releases"
 }

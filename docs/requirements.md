@@ -138,9 +138,9 @@ Definition of Ready (re-evaluated 2026-10-30): manifest ACs (AC-18, 19, 23) READ
 
 ## Non-functional requirements (architect to confirm)
 
-- NFR-1 Compatibility: claims Foundry v13 minimum (verified 13.348) and v14; `compatibility.verified` updated after v14 test. PF2e 7.7.2 minimum tested. RISK: only v14 is available for testing (PO, 2026-10-30), so the v13 minimum claim cannot be verified by us until a v13 environment exists; PO decides whether to keep minimum 13 untested or raise it.
+- NFR-1 Compatibility: Foundry v14 minimum (verified 14.369). PF2e 7.7.2 minimum tested. v13 is not claimed because only v14 is available for testing (PO, 2026-10-30).
 - NFR-2 No runtime dependencies: no libraries, no network calls, single ES module.
-- NFR-3 Console: at the default log level the module emits no per-roll `console.log` output (at most one load message, or none). Debug output only behind an opt-in flag (e.g. `CONFIG.debug` or a module setting). Current code logs on every reroll, including non-hero-point ones; a previous commit reportedly mentioned commenting debug out, but the current file does not. Note the debug output is currently the best diagnostic for B-1, so gate rather than delete until B-1 is resolved.
+- NFR-3 Console: at the default log level the module emits no per-roll `console.log` output (at most one load message, or none). Met by deleting the per-roll logs (no opt-in debug flag). The only console output is a single `console.error` when the floor cannot be applied (fail closed).
 - NFR-4 Robustness: hook must never throw (a throw could break PF2e's reroll flow); AC-13.
 - NFR-5 Performance: hook work is O(number of dice); negligible.
 - NFR-6 Failure mode: if the PF2e payload shape is unrecognized, the module leaves the roll unchanged.
