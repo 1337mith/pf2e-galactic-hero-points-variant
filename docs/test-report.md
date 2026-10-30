@@ -56,3 +56,27 @@ Issue-3 spike evidence encoded: `1d20 + 22` 8->32 and 6->32; `1d20 - 5` 18->13, 
 
 Unverifiable without Foundry: real Roll object shape on PF2e 8.6.1 (tests use a fake), that the chat card/degree of success use the edited `_total`/results, `pf2e.reroll` payload, v13 behaviour (minimum is now 14), sf2e.
 Recommendation: no open critical/major bugs; PO may be asked to accept B-1/S-1 rule-backed ACs, conditional on the PO re-test in Foundry 14 (reroll a `1d20 - N` check, and a positive-modifier check, over ~20 rerolls).
+
+## Manual acceptance test (2026-10-30, product owner)
+Env: Foundry 14.369, pf2e 8.6.1, module 1.1.0 (commit eea1c82). 9 hero point rerolls, no console errors. All reroll dice >= 10; every total equals die plus/minus modifier.
+
+| Modifier | Total before -> after | Reroll die |
+|----------|-----------------------|------------|
+| -10 | 0 -> 7 | 17 |
+| -10 | 10 -> 7 | 17 |
+| -10 | 3 -> 0 | 10 |
+| +0 | 5 -> 20 | 20 |
+| +0 | 7 -> 12 | 12 |
+| +0 | 19 -> 15 | 15 |
+| +4 | 20 -> 16 | 12 |
+| +4 | 19 -> 14 | 10 |
+| +4 | 8 -> 19 | 15 |
+
+Result: BUG-1 and BUG-2 CLOSED/ACCEPTED by the product owner. B-1 AC-15 PASS live; AC-16 smoke test done (9 rerolls, fewer than the 20 planned).
+
+Limitations and still open:
+- The test cannot show a direct before/after for sub-10 dice: rerolled dice were all >= 10, so a floored die (e.g. 6 -> 10) was not observed live. Floor logic remains proven by unit tests only, plus the absence of the guard error live.
+- Degree of success on chat cards was not checked.
+- S-1 AC-6 (kh/kl) and AC-12 (Misfortune) remain BLOCKED (rule silent); AC-10, 11, 14 remain UNVERIFIED.
+
+Lesson: unit fakes must mirror real Foundry term prototypes (BUG-2 slipped through because the fake Die lacked `roll()`).

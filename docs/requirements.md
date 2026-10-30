@@ -22,12 +22,15 @@ PO statements, dated 2026-10-30:
 What the text decides: it applies to a d20 reroll made with a Hero Point; it acts on the dice result, not modifiers; it applies per d20 die result; the die value becomes 10 (so the adjusted die value is what feeds the total).
 What the text is silent on (kept [OPEN]): fortune/misfortune and keep-higher/keep-lower interaction, a chat card note, d20 rolls that are not checks, and explicit degree-of-success wording.
 
+### Decided by the PO (2026-10-30)
+- B-1 (issue #3, incl. BUG-1/BUG-2) ACCEPTED. S-1 PARTIALLY ACCEPTED: AC-1..5, 7..9, 13.
+- Spike branch discarded (go/no-go resolved: no-go).
+- Version 1.1.0; Foundry minimum 14 (verified 14.369). Work order: fix the bug first.
+
 ### Still open (PO has not decided)
-- Go/no-go on the architect's spike.
-- Version bump policy (1.0.4 vs 1.1.0).
-- Whether the release workflow derives or validates version from the tag.
 - Chat card note (Q6).
-- Who obtains console logs for issue #3 (Q7).
+- Issue #3 reporter confirmation on a fixed build (Q7 superseded: logs no longer needed, bug fixed).
+- Release workflow: fixed on this branch; PO has not decided whether it derives or validates version from the tag.
 - Fortune/misfortune and keep-higher/lower (Q3 remainder, Q4); non-check d20s (Q2 remainder); whether sf2e has native handling (Q10).
 
 ## Current system (as read)
@@ -79,15 +82,17 @@ Acceptance criteria (Given/When/Then):
 - AC-13 (robustness) Given newRoll with no dice, no terms, or terms lacking numeric `total`, when the hook runs, then no exception is thrown and no unrelated roll is altered. [CURRENT partially; confirm with test]
 - AC-14 (scope of rolls) Given a hero-points reroll of any d20 roll (attack, skill, save, perception, initiative), when the hook runs, then the floor is applied. [RULE: "reroll a d20 result using a Hero Point".] Non-d20 dice are untouched (AC-5). [OPEN Q2 remainder: text is silent on d20 rolls that are not checks, e.g. flat checks; current code floors any d20 in a hero-points reroll.] Check-type rolls READY; non-check d20s BLOCKED.
 
-NFR/accessibility for S-1: see NFR section. Testability: AC-1 to AC-9, AC-13 are unit-testable with stubbed Roll-like objects and a stubbed `Hooks`; the stub must mirror the real Foundry Roll shape (dice, terms, `term.total`, `_total`), which needs the missing info in B-1. AC-10 to AC-12, AC-14 require Foundry smoke test.
+NFR/accessibility for S-1: see NFR section. Testability: AC-1 to AC-9, AC-13 are unit-testable with stubbed Roll-like objects and a stubbed `Hooks`; the stub mirrors the real Foundry Roll shape (dice, terms, `term.total`, `_total`); B-1 is fixed and accepted, so this is no longer missing. AC-10 to AC-12, AC-14 require Foundry smoke test.
 
-Definition of Ready (re-evaluated 2026-10-30): AC-1 to AC-5, AC-7 to AC-9, AC-13 have criteria, are testable, sized, and rule-backed; stub fidelity still depends on B-1 roll-shape info. AC-10, AC-11 (core), AC-14 (checks) now READY pending PO confirmation of degree-of-success reading and a Foundry v14 smoke test. AC-6 (kh/kl), AC-11 (card note), AC-12, AC-14 (non-check d20s) remain BLOCKED (text silent). Story overall: READY for the rule-backed ACs once B-1 supplies roll shape; remainder blocked.
+Definition of Ready (re-evaluated 2026-10-30): AC-1 to AC-5, AC-7 to AC-9, AC-13 have criteria, are testable, sized, and rule-backed; stub fidelity still depends on B-1 roll-shape info. AC-10, AC-11 (core), AC-14 (checks) now READY pending PO confirmation of degree-of-success reading and a Foundry v14 smoke test. AC-6 (kh/kl), AC-11 (card note), AC-12, AC-14 (non-check d20s) remain BLOCKED (text silent). Story overall: PARTIALLY ACCEPTED by PO 2026-10-30 (AC-1..5, 7..9, 13 accepted). AC-6 (kh/kl) BLOCKED; AC-10, AC-11, AC-12, AC-14 BLOCKED or UNVERIFIED and remain open.
 
 ### Story B-1 (bug): Issue #3 "All rerolls seem to get set to 10?"
 
 As a player using hero points
 I want rerolls above 10 to keep their rolled value
 So that the floor only helps when the die is below 10.
+
+Status: DONE / ACCEPTED by PO 2026-10-30 (includes BUG-1 and BUG-2; v1.1.0, Foundry min 14, verified 14.369). Issue #3 closure awaits reporter confirmation (AC-17, PO decides). The text below is the original investigation record.
 
 Size: M (investigation dominates). Type: bug; per CLAUDE.md, tester writes a failing reproducing test first, then developer fixes. Root cause is NOT asserted here.
 
@@ -98,7 +103,9 @@ Actual (reported): every hero point reroll comes back as 10.
 
 Repro steps as far as known: 1) Foundry v13/v14 with PF2e 7.7.2 and module 1.0.3 enabled; 2) a character makes a d20 check; 3) spend a hero point to reroll from the chat card; 4) observe result. Reported as consistent ("every reroll"). Unknown: which roll types, whether the displayed total or only the die face is 10, whether total includes modifiers, whether it happens without the module enabled (control).
 
-Missing information (needed before a valid failing test can be written):
+Resolved: the roll shape was established and the failing test written and fixed; the list below is historical.
+
+Information that was needed (historical):
 1. What do `oldRoll`, `newRoll` and `resource` look like at hook time (class, `formula`, `dice[]` faces/results, `terms[]` types and `total`, `_total`, `total` getter, `_evaluated`)? Console output from the user's own logs with the existing `console.log` lines, or a captured JSON, would answer this.
 2. Whether results are final at hook time or the roll is re-evaluated or its result replaced after the hook.
 3. Whether the displayed chat card shows 10 as die face, as total, or both; and whether the displayed total equals 10 only when modifiers are zero.
@@ -154,9 +161,9 @@ Definition of Ready (re-evaluated 2026-10-30): manifest ACs (AC-18, 19, 23) READ
 
 | Story | Size | Status | Blockers |
 |---|---|---|---|
-| S-1 floor rule | M | READY for rule-backed ACs (1-5, 7-10, 13, 14 checks); AC-6 kh/kl, 11 note, 12, 14 non-check BLOCKED | B-1 roll shape; Q3/Q4/Q6 remainder |
-| B-1 issue #3 | M | NOT READY (investigation can start in v14) | roll shape info, Q7 |
-| S-2 sf2e (PR #4) | S + M | Manifest ACs READY; AC-20, 21, 22 BLOCKED | version policy, sf2e smoke test, Q10 |
+| S-1 floor rule | M | PARTIALLY ACCEPTED (AC-1..5, 7..9, 13). AC-6 kh/kl BLOCKED; AC-10, 11, 12, 14 BLOCKED or UNVERIFIED, open | Q3/Q4/Q6 remainder, v14 smoke test |
+| B-1 issue #3 | M | DONE / ACCEPTED 2026-10-30 (incl. BUG-1/BUG-2) | reporter confirmation for closure (PO) |
+| S-2 sf2e (PR #4) | S + M | NOT STARTED; S-1/B-1 dependency met; order is PO's. Manifest ACs READY; AC-20 version 1.1.0 decided (confirm tag/URLs); AC-21, 22 BLOCKED | sf2e smoke test, Q10 |
 
 ## Open questions for the product owner
 
@@ -166,9 +173,9 @@ Definition of Ready (re-evaluated 2026-10-30): manifest ACs (AC-18, 19, 23) READ
 4. OPEN: fortune/misfortune (text silent).
 5. PARTLY RESOLVED: adjusted die value (10) feeds the total. Degree-of-success natural-1/20 steps implied to follow the adjusted die; PO to confirm.
 6. OPEN: chat card note (PO undecided; text silent).
-7. OPEN: who obtains issue #3 logs (PO undecided); v14 capture by PO is an option.
+7. SUPERSEDED: logs no longer needed (B-1 accepted). OPEN: reporter confirmation on a fixed build before closing issue #3.
 8. PARTLY RESOLVED: sf2e support confirmed and shipped. Still unverified: exact id `sf2e` and that it emits `pf2e.reroll` with slug `hero-points`.
-9. OPEN: version bump policy (1.0.4 or 1.1.0), release order, and whether workflow derives/validates version from tag.
+9. PARTLY RESOLVED: version 1.1.0 decided. OPEN: whether the release workflow (fixed on this branch) derives/validates version from tag.
 10. OPEN: does sf2e already implement Galactic Hero Points natively (conflict/double-adjust risk)?
-11. OPEN: go/no-go on the architect's spike (PO undecided).
-12. OPEN: keep minimum Foundry 13 untested, or raise it, given no v13 environment?
+11. RESOLVED: spike go/no-go decided; spike branch discarded.
+12. RESOLVED: Foundry minimum raised to 14 (verified 14.369).
