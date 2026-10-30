@@ -12,12 +12,19 @@ export class FakeDie {
   get total() {
     return this.results.reduce((s, r) => s + r.result, 0);
   }
+  // Real Foundry DiceTerm exposes these as prototype METHODS (BUG-2). Guards that test
+  // `term.roll` for truthiness are therefore true for every plain die.
+  roll() { throw new Error("fake: not callable in tests"); }
+  reroll() { throw new Error("fake: not callable in tests"); }
+  explode() { throw new Error("fake: not callable in tests"); }
 }
 export class FakeOperator {
   constructor(operator) { this.operator = operator; this.total = ` ${operator} `; }
+  roll() { throw new Error("fake: not callable in tests"); }
 }
 export class FakeNumeric {
   constructor(number) { this.number = number; this.total = number; }
+  roll() { throw new Error("fake: not callable in tests"); }
 }
 
 // Build a roll from a spec such as [d20(18), "-", 5]. Computes the original
@@ -86,7 +93,7 @@ export function snapshot(roll) {
     terms: (r.terms ?? []).map((t) => ({
       total: t.total,
       results: t.results?.map((x) => ({ ...x })),
-      inner: t.roll ? walk(t.roll) : undefined,
+      inner: t.roll && typeof t.roll === "object" ? walk(t.roll) : undefined,
       rolls: t.rolls?.map(walk),
     })),
   });

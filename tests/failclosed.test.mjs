@@ -88,3 +88,71 @@ test("inactive die stays inactive after flooring", () => {
   applyHeroPointFloor(roll);
   assert.deepEqual(roll.dice[0].results.map((r) => r.active), [true, false]);
 });
+
+// ---- BUG-2: real Foundry DiceTerm has prototype METHODS roll/reroll/explode ----
+// A guard on `term.roll` truthiness fails closed on every plain d20. Only an OBJECT-valued
+// `.roll` (ParentheticalTerm's inner Roll), `.terms` or `.rolls` marks a nested term.
+import { FakeDie, FakeOperator, FakeNumeric, evaluate } from "./helpers/fake-roll.mjs";
+
+const methodBearing = [
+  ["1d20 - 10, die 6 -> 10, total 0", [6], "-", 10, 0, 10],
+  ["1d20 - 10, die 5 -> 10, total 0", [5], "-", 10, 0, 10],
+  ["1d20 - 10, die 17 unchanged, total 7", [17], "-", 10, 7, 17],
+  ["1d20 + 18, die 10 -> total 28", [10], "+", 18, 28, 10],
+  ["1d20 + 18, die 3 -> 10, total 28", [3], "+", 18, 28, 10],
+];
+for (const [name, [v], op, mod, total, shown] of methodBearing) {
+  test(`BUG-2 prototype roll() method: ${name}`, () => {
+    const roll = makeRoll([d20(v), op, mod]);
+    assert.equal(typeof roll.terms[0].roll, "function");
+    assert.equal(typeof roll.terms[2].roll, "function");
+    assert.doesNotThrow(() => applyHeroPointFloor(roll));
+    assert.equal(roll._total, total);
+    assert.equal(roll.dice[0].results[0].result, shown);
+  });
+}
+test("BUG-2 prototype roll() method: bare bare 1d20 with die 4 floors to 10", () => {
+  const roll = makeRoll([d20(4)]);
+  assert.equal(typeof roll.terms[0].roll, "function");
+  assert.doesNotThrow(() => applyHeroPointFloor(roll));
+  assert.equal(roll._total, 10);
+});
+test("BUG-2 cachedDie with prototype roll() floors and refreshes cached total", () => {
+  const roll = makeRoll([cachedDie(20, [4]), "-", 10]);
+  assert.doesNotThrow(() => applyHeroPointFloor(roll));
+  assert.equal(roll._total, 0);
+  assert.equal(roll.terms[0].total, 10);
+});
+test("BUG-2 NumericTerm/OperatorTerm with function-valued roll are accepted", () => {
+  const roll = makeRoll([d20(2), "+", 7]);
+  assert.equal(typeof roll.terms[1].roll, "function");
+  assert.equal(typeof roll.terms[2].roll, "function");
+  assert.doesNotThrow(() => applyHeroPointFloor(roll));
+  assert.equal(roll._total, 17);
+});
+test("BUG-2 nested term with object-valued .roll (own terms) still throws and leaves roll unmutated", () => {
+  const roll = makeRollNested([parenthetical([d20(6), "+", 2], 8)]);
+  assert.equal(typeof roll.terms[0].roll, "object");
+  const before = snapshot(roll);
+  assert.throws(() => applyHeroPointFloor(roll));
+  assert.equal(snapshot(roll), before);
+});
+test("BUG-2 term with only an object-valued .roll (no .terms) still throws", () => {
+  const inner = makeRoll([d20(6)]);
+  const roll = makeRoll([d20(3), "+", { roll: inner, total: 6 }]);
+  const before = snapshot(roll);
+  assert.throws(() => applyHeroPointFloor(roll));
+  assert.equal(snapshot(roll), before);
+});
+test("BUG-2 term with .terms array still throws and leaves roll unmutated", () => {
+  const roll = makeRoll([d20(3), "+", { terms: [new FakeNumeric(2)], total: 2 }]);
+  const before = snapshot(roll);
+  assert.throws(() => applyHeroPointFloor(roll));
+  assert.equal(snapshot(roll), before);
+});
+test("BUG-2 PoolTerm .rolls array still throws and leaves roll unmutated", () => {
+  const roll = makeRollNested([pool([makeRoll([d20(6)]), makeRoll([d20(4)])], 10)]);
+  const before = snapshot(roll);
+  assert.throws(() => applyHeroPointFloor(roll));
+  assert.equal(snapshot(roll), before);
+});

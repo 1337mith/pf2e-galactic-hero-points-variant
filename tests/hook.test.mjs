@@ -55,3 +55,24 @@ test("unsupported formula `1d20 * 2` via hook: error logged, roll left unchanged
     assert.equal(err.mock.callCount(), 1);
   } finally { err.mock.restore(); }
 });
+
+test("BUG-2 hook with method-bearing real-shaped dice: no console.error, roll floored (`1d20 - 10`)", () => {
+  const err = mock.method(console, "error", () => {});
+  try {
+    const newRoll = makeRoll([d20(6), "-", 10]);
+    assert.equal(typeof newRoll.terms[0].roll, "function");
+    handler(makeRoll([d20(2), "-", 10]), newRoll, heroPoints());
+    assert.equal(err.mock.callCount(), 0);
+    assert.equal(newRoll._total, 0);
+    assert.equal(newRoll.dice[0].results[0].result, 10);
+  } finally { err.mock.restore(); }
+});
+test("BUG-2 hook with method-bearing dice: `1d20 + 18` die 5 gives 28, no console.error", () => {
+  const err = mock.method(console, "error", () => {});
+  try {
+    const newRoll = makeRoll([d20(5), "+", 18]);
+    handler(makeRoll([d20(2), "+", 18]), newRoll, heroPoints());
+    assert.equal(err.mock.callCount(), 0);
+    assert.equal(newRoll._total, 28);
+  } finally { err.mock.restore(); }
+});

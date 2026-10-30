@@ -32,3 +32,27 @@ New files: tests/failclosed.test.mjs, tests/hook.test.mjs; helpers added to test
 | Hook fail-closed: `1d20 * 2` logs error, roll unchanged | 1 | FAIL (no throw, roll mutated) |
 
 AC-9 now covered at hook level (oldRoll snapshot unchanged). AC-6/12/10/11 remain BLOCKED.
+
+## GREEN verification (2026-10-30, commit 48082a5, branch fix/issue-3-negative-modifier)
+Run: `node --test tests/`: 52 tests, 52 pass, 0 fail. module.json parses (version 1.1.0, minimum 14, verified 14.369; manifest/download URLs use v1.1.0). package.json valid JSON.
+Issue-3 spike evidence encoded: `1d20 + 22` 8->32 and 6->32; `1d20 - 5` 18->13, 6->5, 5->5 (tests/reroll.test.mjs, tagged B-1).
+
+| AC | Result | Proof |
+|----|--------|-------|
+| S-1 AC-1, AC-2 | PASS | reroll.test.mjs floor cases (bare 1d20 7->10, 19, 10; +3 cases) |
+| S-1 AC-3 | PASS | "every d20 value 1..20 yields max(R,10)" |
+| S-1 AC-4 | PASS | +22, +3, -5, +4-2 cases; unary minus cases in failclosed.test.mjs |
+| S-1 AC-5 | PASS | "non-d20 dice below 10 are untouched" |
+| S-1 AC-7 | PASS | hook.test.mjs other slug no-op; isHeroPointReroll test |
+| S-1 AC-8 | PASS | "is idempotent" |
+| S-1 AC-9 | PASS | hook.test.mjs oldRoll never mutated |
+| S-1 AC-13 | PASS | empty roll, unevaluated die, hook catches exception; fail-closed on unsupported formulas |
+| S-1 AC-6 (kh/kl), AC-12 | BLOCKED (rule silent); inactive-die handling tested but not rule-confirmed |
+| S-1 AC-10, 11, 14 | UNVERIFIED, needs live Foundry |
+| B-1 AC-15 | PASS | negative-modifier cases failed before fix, pass now |
+| B-1 AC-16 | PARTIAL | unit part PASS; 20-reroll Foundry 14 smoke test not done |
+| B-1 AC-17 | NOT DONE | reporter confirmation (PO) |
+| S-2 (sf2e, AC-18..22) | OUT OF SCOPE; module.json has no sf2e entry |
+
+Unverifiable without Foundry: real Roll object shape on PF2e 8.6.1 (tests use a fake), that the chat card/degree of success use the edited `_total`/results, `pf2e.reroll` payload, v13 behaviour (minimum is now 14), sf2e.
+Recommendation: no open critical/major bugs; PO may be asked to accept B-1/S-1 rule-backed ACs, conditional on the PO re-test in Foundry 14 (reroll a `1d20 - N` check, and a positive-modifier check, over ~20 rerolls).
