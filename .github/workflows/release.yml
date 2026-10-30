@@ -14,15 +14,28 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Get version from git tag
       id: vars
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
+    - name: Run tests
+      run: node --test tests/
+
+    - name: Verify tag version matches module.json
+      run: |
+        MODULE_VERSION=$(node -p "require('./module.json').version")
+        if [ "$MODULE_VERSION" != "$VERSION" ]; then
+          echo "::error::Tag version ($VERSION) does not match module.json version ($MODULE_VERSION)"
+          exit 1
+        fi
+
     - name: Create ZIP archive with version in name
       run: |
-        zip -r pf2e-galactic-hero-points-variant-${VERSION}.zip .
+        FILES="module.json scripts"
+        for f in README.md LICENSE; do [ -f "$f" ] && FILES="$FILES $f"; done
+        zip -r pf2e-galactic-hero-points-variant-${VERSION}.zip $FILES
       
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -31,13 +44,10 @@ jobs:
         path: pf2e-galactic-hero-points-variant-${{ env.VERSION }}.zip
 
     - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         body: "Automated release for version ${{ github.ref_name }}."
         draft: false
         prerelease: false
+        files: pf2e-galactic-hero-points-variant-${{ env.VERSION }}.zip
