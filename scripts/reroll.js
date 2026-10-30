@@ -26,7 +26,13 @@ export function applyHeroPointFloor(roll, floor = 10) {
       afterOperator = true;
       continue;
     }
-    if (term.terms || term.roll || term.rolls) {
+    // Real Foundry terms expose functions (e.g. DiceTerm.prototype.roll), so only
+    // arrays/objects count as nested structure, never bare truthiness.
+    if (
+      Array.isArray(term.terms) ||
+      Array.isArray(term.rolls) ||
+      (term.roll && typeof term.roll === "object")
+    ) {
       throw new Error("nested terms (parentheses or pools) are not supported");
     }
     let termTotal = term.total;
